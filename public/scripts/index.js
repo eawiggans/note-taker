@@ -1,8 +1,74 @@
+const { json } = require('express');
+const express = require('express').Router();
+const PORT = 3001;
+const app = express();
+const path = require('path');
+const uuid = require('../../uuid');
+const fs = require('fs');
+
 let noteTitle;
 let noteText;
 let saveNoteBtn;
 let newNoteBtn;
 let noteList;
+
+
+// fs
+
+//promise version of fs.readFile
+const readFromFile = util.promisify(fs.readFile);
+
+// function to write date to json file
+const writeToFile = (destination, content) =>
+  fs.writeFile(destination, JSON.stringify(content, null, '\t'), (err) => 
+    err ? console.error(err) : console.info(`data written to ${destination}`)
+  );
+
+const readAndAppend = (content, file) => {
+  fs.readFile(file, 'utf8', (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      const parsedData = JSON.parse(data);
+      parsedData.push(content);
+      writeToFile(file, parsedData);
+    }
+  });
+};
+
+// HTML routes
+
+// GET route for notes html page
+app.get('/notes', (req, res) => {
+  console.info(`${req.method} request received for notes`)
+  res.sendFile(path.join(__dirname, '/public/pages/notes.html'))
+}
+);
+
+// GET route for index.html page
+app.get('/index', (req, res) => {
+  console.info(`${req.method} request received`)
+  res.sendFile(path.join(__dirname, '/public/pages/index.html'))
+}
+);
+
+// API routes
+
+// GET API reads db.json file and returns all saved notes
+app.get('/api/notes', (req, res) => {
+  console.infor(`${req.method} request received for saved notes`);
+
+  readFromFile('../../db/db.json').then((data) => res.json(JSON.parse(data)));
+
+});
+
+// POST API receive new note saved on req body, add to db.json, and return new note to client (use uuid)
+app.post('/api/notes', (req, res) => {
+  console.info(`${req.method} request received to save note`);
+  // destructure items in req.body const { title, text }
+  // if all required properties of req.body are present if (title && text) { const newNote = { title, text, noteId: uuid(),}; readAndAppend(newNote, '../../db/db.json); const response = {status: 'success' body: newNote}; res.json(response);} else {res.json('Error in saving new note');}
+})
+
 
 if (window.location.pathname === '/notes') {
   noteTitle = document.querySelector('.note-title');
@@ -31,7 +97,8 @@ const getNotes = () =>
     headers: {
       'Content-Type': 'application/json',
     },
-  });
+
+  })
 
 const saveNote = (note) =>
   fetch('/api/notes', {
@@ -179,5 +246,9 @@ if (window.location.pathname === '/notes') {
   noteTitle.addEventListener('keyup', handleRenderSaveBtn);
   noteText.addEventListener('keyup', handleRenderSaveBtn);
 }
+
+
+
+
 
 getAndRenderNotes();
