@@ -3,23 +3,23 @@ const { readFromFile, readAndAppend } = require('../helpers/fsUtils');
 const uuid = require('../helpers/uuid');
 
 // GET Route for retrieving all the notes
-api.get('/', (req, res) => {
+api.get('/notes', (req, res) => {
   console.info(`${req.method} request received for notes`);
   readFromFile('./db/db.json').then((data) => res.json(JSON.parse(data)));
 });
 
 // POST Route for a new note
-api.post('/', (req, res) => {
+api.post('/notes', (req, res) => {
   console.info(`${req.method} request received to add a note`);
   console.log(req.body);
 
-  const { noteTitle, noteText } = req.body;
+  const { title, text } = req.body;
 
   if (req.body) {
     const newNote = {
-      noteTitle,
-      noteText,
-      note_id: uuid(),
+      title,
+      text,
+      id: uuid(),
     };
 
     readAndAppend(newNote, './db/db.json');
